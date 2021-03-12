@@ -198,6 +198,6 @@ static HAL_StatusTypeDef HC595_Set_Symb(SPI_HandleTypeDef *spi_hndl, char symb)
 			break;
 	}
 	
-	return HAL_SPI_Transmit_DMA(spi_hndl, &num, 1);
+	return HAL_SPI_Transmit(spi_hndl, &num, 1, 5000);
 }
 

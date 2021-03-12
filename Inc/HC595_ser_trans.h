@@ -24,7 +24,7 @@ typedef enum{
 	HC595_STR_EQUAL_LEN_ERR,
 }hc595_err_t;
 
-// вывод символов на n семисегментных инд. с помощью 74HC595
+// вывод символов на n семисегментных инд. с помощью n сдвиговых регистров 74HC595
 hc595_err_t HC595_Set_Column_Symbols(SPI_HandleTypeDef *handle, char *str_clm, int8_t n, GPIO_TypeDef *cs_port, uint16_t cs_pin);
 
 
