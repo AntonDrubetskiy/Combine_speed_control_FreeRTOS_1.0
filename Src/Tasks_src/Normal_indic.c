@@ -17,14 +17,6 @@ extern SPI_HandleTypeDef hspi2;
 #define DIGIT_3_ON(b) 		TIM3->CCR1=b // 3-й
 #define ALL_DIGIT_OFF() 	TIM3->CCR1=0, TIM3->CCR2=0, TIM3->CCR3=0 // все разряды отключены
 
-typedef enum {
-	TRANSMIT_WAIT,
-	TRANSMIT_COMPLETE,
-	TRANSMIT_ERROR
-}spi_tans_t;
-
-/* transfer state */
-__IO uint32_t wTransferState = TRANSMIT_WAIT;
 
 /* Definitions for Indic_queue */
 osMessageQueueId_t Indic_queue_Handle;
@@ -138,28 +130,4 @@ static inline void create_indic_strings(char **str_speed, char **str_indic, char
 	}
 }
 
-
-
-/**
-  * @brief  Tx Transfer completed callback.
-  * @param  hspi pointer to a SPI_HandleTypeDef structure that contains
-  *               the configuration information for SPI module.
-  * @retval None
-  */
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-	wTransferState = TRANSMIT_COMPLETE;
-}
-
-/**
-  * @brief  SPI error callbacks.
-  * @param  hspi: SPI handle
-  * @note   This example shows a simple way to report transfer error, and you can
-  *         add your own implementation.
-  * @retval None
-  */
-void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
-{
-  wTransferState = TRANSMIT_ERROR;
-}
 

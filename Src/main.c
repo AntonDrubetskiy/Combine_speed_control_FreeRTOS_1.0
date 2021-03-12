@@ -1,45 +1,13 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
+
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "Normal_indic.h"
+#include "Check_speed.h"
+#include "Buzzer.h"
+#include "Blink_indic.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi2;
@@ -51,21 +19,39 @@ TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
+
+/* Definitions for Normal_Indic */
+osThreadId_t Normal_Indic_Handle;
+const osThreadAttr_t Normal_Indic_attributes = {
+  .name = "Normal_Indic",
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
-/* Definitions for myQueue01 */
-osMessageQueueId_t myQueue01Handle;
-const osMessageQueueAttr_t myQueue01_attributes = {
-  .name = "myQueue01"
+/* Definitions for Blink_Indic */
+osThreadId_t Blink_Indic_Handle;
+const osThreadAttr_t Blink_Indic_attributes = {
+  .name = "Blink_Indic",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 4
 };
-/* USER CODE BEGIN PV */
+/* Definitions for Buzzer */
+osThreadId_t Buzzer_Handle;
+const osThreadAttr_t Buzzer_attributes = {
+  .name = "Buzzer",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 4
+};
+/* Definitions for Check_speed */
+osThreadId_t Check_speed_Handle;
+const osThreadAttr_t Check_speed_attributes = {
+  .name = "Check_speed",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 128 * 4
+};
 
-/* USER CODE END PV */
+static uint16_t count = 0;
+
+
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -76,16 +62,13 @@ static void MX_SPI2_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
-void StartDefaultTask(void *argument);
 
-/* USER CODE BEGIN PFP */
+static inline void calculate_speed(uint8_t *cnt_pls, uint8_t *cnt_trn, int64_t *usec, int64_t *lst_tim_trn,
+																			int64_t *tim_trn, uint16_t *trn_spd, speed_data_t *speed, uint8_t spd_ch);
 
-/* USER CODE END PFP */
+static inline void set_brightness(void);
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
@@ -93,25 +76,13 @@ void StartDefaultTask(void *argument);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
   /* Configure the system clock */
   SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
@@ -121,55 +92,46 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_USART1_UART_Init();
-  /* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
-
+	
+	//------------------------------------------------------------------
+	// запуск таймеров и ШИМ
+	//------------------------------------------------------------------
+	// запуск таймеров
+	HAL_TIM_Base_Start_IT(&htim1);
+	HAL_TIM_Base_Start_IT(&htim2);
+	// запуск ШИМ
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+	HAL_Delay(100);
+	//==================================================================
+	
+	
   /* Init scheduler */
   osKernelInitialize();
 
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+	/* Create the thread(s) */
+  /* creation of Normal_Indic_ */
+  Normal_Indic_Handle = osThreadNew(Normal_Indicate_task, NULL, &Normal_Indic_attributes);
+  /* creation of Blink_Indic_ */
+  Blink_Indic_Handle = osThreadNew(Blink_Indicate_task, NULL, &Blink_Indic_attributes);
+  /* creation of Buzzer_ */
+  Buzzer_Handle = osThreadNew(Buzzer_task, NULL, &Buzzer_attributes);
+  /* creation of Check_speed_ */
+  Check_speed_Handle = osThreadNew(Check_speed_task, NULL, &Check_speed_attributes);
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
-
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  /* Create the queue(s) */
-  /* creation of myQueue01 */
-  myQueue01Handle = osMessageQueueNew (16, sizeof(uint16_t), &myQueue01_attributes);
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
-
-  /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
   osKernelStart();
  
-  /* We should never get here as control is now taken by the scheduler */
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
   while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+  { }
 }
+
+/*********************************************************************************************************************
+*																							SYSTEM SETUP																													 *
+**********************************************************************************************************************/
 
 /**
   * @brief System Clock Configuration
@@ -215,14 +177,6 @@ void SystemClock_Config(void)
   */
 static void MX_SPI2_Init(void)
 {
-
-  /* USER CODE BEGIN SPI2_Init 0 */
-
-  /* USER CODE END SPI2_Init 0 */
-
-  /* USER CODE BEGIN SPI2_Init 1 */
-
-  /* USER CODE END SPI2_Init 1 */
   /* SPI2 parameter configuration*/
   hspi2.Instance = SPI2;
   hspi2.Init.Mode = SPI_MODE_MASTER;
@@ -240,9 +194,6 @@ static void MX_SPI2_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN SPI2_Init 2 */
-
-  /* USER CODE END SPI2_Init 2 */
 
 }
 
@@ -254,16 +205,9 @@ static void MX_SPI2_Init(void)
 static void MX_TIM1_Init(void)
 {
 
-  /* USER CODE BEGIN TIM1_Init 0 */
-
-  /* USER CODE END TIM1_Init 0 */
-
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
-  /* USER CODE BEGIN TIM1_Init 1 */
-
-  /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 72;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -286,10 +230,6 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM1_Init 2 */
-
-  /* USER CODE END TIM1_Init 2 */
-
 }
 
 /**
@@ -299,17 +239,9 @@ static void MX_TIM1_Init(void)
   */
 static void MX_TIM2_Init(void)
 {
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 275;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -331,9 +263,6 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -345,18 +274,11 @@ static void MX_TIM2_Init(void)
 static void MX_TIM3_Init(void)
 {
 
-  /* USER CODE BEGIN TIM3_Init 0 */
-
-  /* USER CODE END TIM3_Init 0 */
-
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
 
-  /* USER CODE BEGIN TIM3_Init 1 */
-
-  /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 72;
+  htim3.Init.Prescaler = 1;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 1000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -387,9 +309,7 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM3_Init 2 */
 
-  /* USER CODE END TIM3_Init 2 */
   HAL_TIM_MspPostInit(&htim3);
 
 }
@@ -402,13 +322,6 @@ static void MX_TIM3_Init(void)
 static void MX_USART1_UART_Init(void)
 {
 
-  /* USER CODE BEGIN USART1_Init 0 */
-
-  /* USER CODE END USART1_Init 0 */
-
-  /* USER CODE BEGIN USART1_Init 1 */
-
-  /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
   huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
@@ -421,9 +334,6 @@ static void MX_USART1_UART_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART1_Init 2 */
-
-  /* USER CODE END USART1_Init 2 */
 
 }
 
@@ -522,27 +432,9 @@ static void MX_GPIO_Init(void)
 
 }
 
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
-/* USER CODE BEGIN Header_StartDefaultTask */
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used 
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END 5 */ 
-}
+/************************************************************************************************************
+*																					END SYSTEM SETUP																									*
+*************************************************************************************************************/
 
  /**
   * @brief  Period elapsed callback in non blocking mode
@@ -554,28 +446,177 @@ void StartDefaultTask(void *argument)
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  /* USER CODE BEGIN Callback 0 */
-
-  /* USER CODE END Callback 0 */
   if (htim->Instance == TIM4) {
     HAL_IncTick();
   }
-  /* USER CODE BEGIN Callback 1 */
-
-  /* USER CODE END Callback 1 */
+	
+	if (htim->Instance == TIM1) {
+		if(count == UINT16_MAX){
+			count = 0;
+		}
+		else{
+			count++;
+		}
+  }
 }
+
+
+/**---------------------------------------------------------------
+  * @brief функция возврата микросекунд с начала работы программы
+  * @param None
+  * @retval long, количество микросекунд с начала работы программы
+------------------------------------------------------------------*/
+int64_t micros(void)
+{
+	return (TIM1->CNT + count * UINT16_MAX);
+}
+//---------------------------------------------------------------
+//---------------------------------------------------------------
+
+
+
+/**---------------------------------------------------------------
+  * @brief Callback function
+	* @param GPIO_Pin на котором сработало прерывание
+  * @retval None
+------------------------------------------------------------------*/
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	static uint8_t i;
+	static uint8_t cnt_pulse[SPEED_CHANNEL_MAX];
+	static uint8_t cnt_turn[SPEED_CHANNEL_MAX];
+	static int64_t microsec, last_tim_turn[SPEED_CHANNEL_MAX], time_turn[SPEED_CHANNEL_MAX];
+	static uint16_t turn_speed[SPEED_CHANNEL_MAX];
+	static speed_data_t speed_data[SPEED_CHANNEL_MAX] = {
+																									{.flag_buzzer_off = true}, 
+																									{.flag_buzzer_off = true},
+																									{.flag_buzzer_off = true}, 
+																									{.flag_buzzer_off = true}, 
+																									{.flag_buzzer_off = true}, 
+																									};
+	
+	switch (GPIO_Pin)
+		{
+			// прерывание по первому каналу измерения частоты вращения
+			case Input_1_Pin:
+				calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_1);
+			break;
+			
+			// прерывание по второму каналу измерения частоты вращения
+			case Input_2_Pin:
+				calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_2);
+			break;
+			
+			// прерывание по третьему каналу измерения частоты вращения
+			case Input_3_Pin:
+				calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_3);
+			break;
+
+			// прерывание по четвертому каналу измерения частоты вращения
+			case Input_4_Pin:
+				calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_4);
+			break;
+
+			// прерывание по пятому каналу измерения частоты вращения
+			case Input_5_Pin:
+					calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_5);
+			break;
+			
+			// обработка нажатия кнопки уменьшения яркости дисплеев
+			case Brightness_Pin:
+				set_brightness();
+			break;
+			
+				// обработка нажатия кнопки выключения звукового сигнала
+			case Buzzer_OFF_Pin:
+				for(i = 0; i < SPEED_CHANNEL_MAX; i++){
+					speed_data[i].flag_buzzer_off=!speed_data[i].flag_buzzer_off;
+				}	
+			break;
+		}
+}
+//---------------------------------------------------------------
+//---------------------------------------------------------------
+
+
+
+static inline void calculate_speed(uint8_t *cnt_pls, uint8_t *cnt_trn, int64_t *usec, int64_t *lst_tim_trn,
+																			int64_t *tim_trn, uint16_t *trn_spd, speed_data_t *speed, uint8_t spd_ch)
+{
+	if(cnt_pls[spd_ch]==4) // один оборот - 4 импульса датчика
+	{	
+		if(cnt_trn[spd_ch]<10)
+		{
+			*usec=micros();
+			tim_trn[spd_ch]=*usec-lst_tim_trn[spd_ch];
+			lst_tim_trn[spd_ch]=*usec;
+			trn_spd[spd_ch]=60000000/tim_trn[spd_ch];
+			speed[spd_ch].rotate[spd_ch]=trn_spd[spd_ch];
+			cnt_trn[spd_ch]++;
+		}
+		else
+		{
+			*usec=micros();
+			lst_tim_trn[spd_ch]=*usec;
+			cnt_trn[spd_ch]=0;
+			Speed_evt(&speed[spd_ch]);
+		}
+		cnt_pls[spd_ch]=0;
+//		flag_char[0]=false;
+//		count_reset_digit[0]=0;
+//		flag_stop_speed[0]=true;
+//		flag_stop_speed_once[0]=true;
+//		buzzer_on_stop_speed[0]=false;
+	}
+	cnt_pls[spd_ch]++;
+}
+
+
+static inline void set_brightness(void)
+{
+	static uint8_t count_brightness;
+	static uint16_t brightness;
+	
+	if(count_brightness==4){
+		count_brightness=0;
+	}else{
+		count_brightness++;
+	}
+			
+	switch(count_brightness)
+	{
+		case 0:
+			brightness=BRIGHTNESS_100;
+			break;
+		
+		case 1:
+			brightness=BRIGHTNESS_60;
+			break;
+		
+		case 2:
+			brightness=BRIGHTNESS_30;
+			break;
+		
+		case 3:
+			brightness=BRIGHTNESS_10;
+			break;
+		
+		case 4:
+			brightness=BRIGHTNESS_5;
+			break;
+	}
+	
+	Indic_brightness_evt(&brightness);
+}
+
+
 
 /**
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
 void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-
-  /* USER CODE END Error_Handler_Debug */
-}
+{ }
 
 #ifdef  USE_FULL_ASSERT
 /**

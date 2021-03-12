@@ -6,6 +6,14 @@
 #define CS_SET(port, pin) 		HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET) // разрешение на запись данных
 #define CS_RESET(port, pin) 	HAL_GPIO_WritePin(port, pin, GPIO_PIN_SET) // "защелка" данных с одновременным выводм их на выходы Q0-Q7
 
+typedef enum {
+	TRANSMIT_WAIT,
+	TRANSMIT_COMPLETE,
+	TRANSMIT_ERROR
+}spi_tans_t;
+
+/* transfer state */
+__IO uint32_t wTransferState = TRANSMIT_WAIT;
 
 static HAL_StatusTypeDef HC595_Set_Symb(SPI_HandleTypeDef *handle, char symb);
 
@@ -30,6 +38,8 @@ hc595_err_t HC595_Set_Column_Symbols(SPI_HandleTypeDef *handle, char *str_clm, i
 		if(HC595_Set_Symb(handle, str_clm[i]) != HAL_OK){
 			return HC595_TRANSMIT_ERR;
 		}
+		while(wTransferState == TRANSMIT_WAIT)
+		{ }
 	}
 	
 	CS_RESET(cs_port, cs_pin);
@@ -201,3 +211,26 @@ static HAL_StatusTypeDef HC595_Set_Symb(SPI_HandleTypeDef *spi_hndl, char symb)
 	return HAL_SPI_Transmit_DMA(spi_hndl, &num, 1);
 }
 
+
+/**
+  * @brief  Tx Transfer completed callback.
+  * @param  hspi pointer to a SPI_HandleTypeDef structure that contains
+  *               the configuration information for SPI module.
+  * @retval None
+  */
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+	wTransferState = TRANSMIT_COMPLETE;
+}
+
+/**
+  * @brief  SPI error callbacks.
+  * @param  hspi: SPI handle
+  * @note   This example shows a simple way to report transfer error, and you can
+  *         add your own implementation.
+  * @retval None
+  */
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
+{
+  wTransferState = TRANSMIT_ERROR;
+}
