@@ -7,9 +7,6 @@
 #define BUZZER_ON() 			HAL_GPIO_WritePin(Buzzer_GPIO_Port, Buzzer_Pin, GPIO_PIN_RESET) // включение
 #define BUZZER_OFF()			HAL_GPIO_WritePin(Buzzer_GPIO_Port, Buzzer_Pin, GPIO_PIN_SET) // отключение
 
-#define TOTAL_BZR_ON_OFF_BIT		0
-#define CH_BZR_ON_OFF_BIT				1
-#define EMERG_BZR_ON_OFF_BIT		2
 
 /* Definitions for Buzzer_queue */
 osMessageQueueId_t Buzzer_queue_Handle;
