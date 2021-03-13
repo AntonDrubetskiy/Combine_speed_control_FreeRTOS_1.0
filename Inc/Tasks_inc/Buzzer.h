@@ -11,7 +11,6 @@ typedef struct{
 	unsigned emerg_buzz_on_off : 1;
 }buzzer_evnt_t;
 
-
 void Buzzer_task(void *argument);
 
 HAL_StatusTypeDef Buzzer_ev(buzzer_evnt_t* buzz_evnt);

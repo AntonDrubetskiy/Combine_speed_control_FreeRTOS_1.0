@@ -1,6 +1,7 @@
 
 #include "Check_speed.h"
 #include "Normal_indic.h"
+#include "Buzzer.h"
 #include "cmsis_os.h"
 #include "main.h"
 #include "Flash.h"
@@ -39,6 +40,7 @@ void Check_speed_task(void *argument)
   Speed_queue_Handle = osMessageQueueNew(10, sizeof(speed_data_t), &Speed_queue_attributes);
 	speed_data_t check_speed_data;
 
+	buzzer_evnt_t buzz_evnt;
 	uint8_t i;
 	uint16_t speed = 0;
 	indic_data_t indic_evnt;
@@ -88,6 +90,11 @@ void Check_speed_task(void *argument)
 				break;
 			
 			case SPEED_CHANNEL_5:
+				break;
+			
+			case SPEED_CHANNEL_MAX:
+				buzz_evnt.total_buzz_on_off = check_speed_data.buzzer_state;
+				Buzzer_ev(&buzz_evnt);
 				break;
 		}
     osDelay(1);
