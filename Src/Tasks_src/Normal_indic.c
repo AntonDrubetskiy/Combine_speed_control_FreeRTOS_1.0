@@ -9,7 +9,8 @@
 
 #define NUM_COLUMN			(3)
 
-extern SPI_HandleTypeDef hspi2;
+SPI_HandleTypeDef hspi2;
+DMA_HandleTypeDef hdma_spi2_tx;
 
 // подключение разрядов
 #define DIGIT_1_ON(b) 		TIM3->CCR3=b // 1-й
@@ -48,6 +49,9 @@ HAL_StatusTypeDef Indic_brightness_evt(uint16_t *bright)
 	return HAL_OK;
 }
 
+static void MX_DMA_Init(void);
+static void MX_SPI2_Init(void);
+
 static inline void create_indic_strings(char **str_speed, char **str_indic, char *str_off);
 
 /**
@@ -57,6 +61,8 @@ static inline void create_indic_strings(char **str_speed, char **str_indic, char
   */
 void Normal_Indicate_task(void *argument)
 {
+	MX_DMA_Init();
+	MX_SPI2_Init();
 	/* creation of Indic_queue */
   Indic_queue_Handle = osMessageQueueNew(10, sizeof(indic_data_t), &Indic_queue_attributes);
 	/* creation of Brightness_queue */
@@ -131,3 +137,45 @@ static inline void create_indic_strings(char **str_speed, char **str_indic, char
 }
 
 
+/**
+  * @brief SPI2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI2_Init(void)
+{
+  /* SPI2 parameter configuration*/
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_MASTER;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+}
+
+/** 
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void) 
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+
+}
