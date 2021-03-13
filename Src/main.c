@@ -446,13 +446,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	static uint8_t cnt_turn[SPEED_CHANNEL_MAX];
 	static int64_t microsec, last_tim_turn[SPEED_CHANNEL_MAX], time_turn[SPEED_CHANNEL_MAX];
 	static uint16_t turn_speed[SPEED_CHANNEL_MAX];
-	static speed_data_t speed_data[SPEED_CHANNEL_MAX] = {
-																									{.flag_buzzer_off = true}, 
-																									{.flag_buzzer_off = true},
-																									{.flag_buzzer_off = true}, 
-																									{.flag_buzzer_off = true}, 
-																									{.flag_buzzer_off = true}, 
-																									};
+	static speed_data_t speed_data[SPEED_CHANNEL_MAX];
+	static buzzer_evnt_t bzr_evnt = {.total_buzz_on_off = 1};
 	
 	switch (GPIO_Pin)
 		{
@@ -488,9 +483,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			
 				// обработка нажатия кнопки выключения звукового сигнала
 			case Buzzer_OFF_Pin:
-				for(i = 0; i < SPEED_CHANNEL_MAX; i++){
-					speed_data[i].flag_buzzer_off=!speed_data[i].flag_buzzer_off;
-				}	
+				bzr_evnt.total_buzz_on_off ^= (1 << 0);
+				Buzzer_ev(&bzr_evnt);
 			break;
 		}
 }
