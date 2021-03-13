@@ -21,8 +21,9 @@ typedef struct{
 	bool flag_buzzer_off;
 } speed_data_t;
 
-
 void Check_speed_task(void *argument);
+
+void Increase_Check_Speed_TIM_counter(void);
 
 HAL_StatusTypeDef Speed_evt(speed_data_t *speed);
 

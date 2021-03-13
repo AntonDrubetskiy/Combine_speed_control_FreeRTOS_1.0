@@ -413,6 +413,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			count++;
 		}
   }
+	
+	if(htim->Instance == TIM2){
+		Increase_Check_Speed_TIM_counter();
+	}
 }
 
 

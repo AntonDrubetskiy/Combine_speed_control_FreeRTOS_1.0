@@ -3,9 +3,8 @@
 #include "cmsis_os.h"
 #include "HC595_ser_trans.h"
 #include "main.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include "Check_speed.h"
+#include <stdlib.h>
 
 #define NUM_COLUMN			(3)
 
@@ -79,11 +78,9 @@ void Normal_Indicate_task(void *argument)
 
   for(;;)
   {
-		if(osMessageQueueGet(Indic_queue_Handle, &indic_data, NULL, 0) == osOK){
-			sprintf(str_speed[indic_data.speed_ch], "%u", indic_data.speed);
-			
+		if(osMessageQueueGet(Indic_queue_Handle, &indic_data, NULL, 0) == osOK){		
 			for(i = 0; i < NUM_COLUMN; i++){
-				str_indic_column[i][indic_data.speed_ch] = str_speed[indic_data.speed_ch][i];
+				str_indic_column[i][indic_data.speed_ch] = indic_data.speed[i];
 			}
 		}
     

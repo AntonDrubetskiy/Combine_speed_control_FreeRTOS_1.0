@@ -7,7 +7,7 @@
 #include "stm32f1xx_hal.h"
 
 typedef struct{
-	uint16_t speed;
+	char speed[10];
 	uint8_t speed_ch;
 	unsigned ch_1_on : 1;
 	unsigned ch_2_on : 1;
