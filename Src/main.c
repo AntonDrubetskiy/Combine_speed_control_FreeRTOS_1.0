@@ -7,6 +7,28 @@
 #include "Check_speed.h"
 #include "Buzzer.h"
 #include "Blink_indic.h"
+#include <stdio.h>
+
+
+#define ITM_Port8(n)    (*((volatile unsigned char *)(0xE0000000+4*n)))
+#define ITM_Port16(n)   (*((volatile unsigned short*)(0xE0000000+4*n)))
+#define ITM_Port32(n)   (*((volatile unsigned long *)(0xE0000000+4*n)))
+#define DEMCR           (*((volatile unsigned long *)(0xE000EDFC)))
+#define TRCENA          0x01000000
+
+
+struct __FILE { int handle; /* Add whatever you need here */ };
+FILE __stdout;
+FILE __stdin;
+
+int fputc(int ch, FILE *f) {
+   if (DEMCR & TRCENA) {
+
+while (ITM_Port32(0) == 0);
+    ITM_Port8(0) = ch;
+  }
+  return(ch);
+}
 
 
 /* Private variables ---------------------------------------------------------*/
@@ -60,7 +82,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 
-static inline void calculate_speed(uint8_t *cnt_pls, uint8_t *cnt_trn, int64_t *usec, int64_t *lst_tim_trn,
+static inline void calculate_speed(uint8_t *cnt_pls, int64_t *usec, int64_t *lst_tim_trn,
 																			int64_t *tim_trn, uint16_t *trn_spd, speed_data_t *speed, uint8_t spd_ch);
 
 static inline void set_brightness(void);
@@ -102,21 +124,23 @@ int main(void)
 	HAL_Delay(100);
 	//==================================================================
 	
+	printf("START APPLICATION!\n\r");
 	
   /* Init scheduler */
   osKernelInitialize();
-
+	
+	//__disable_irq();
 	/* Create the thread(s) */
+	/* creation of Check_speed_ */
+  Check_speed_Handle = osThreadNew(Check_speed_task, NULL, &Check_speed_attributes);
   /* creation of Normal_Indic_ */
   Normal_Indic_Handle = osThreadNew(Normal_Indicate_task, NULL, &Normal_Indic_attributes);
   /* creation of Blink_Indic_ */
   Blink_Indic_Handle = osThreadNew(Blink_Indicate_task, NULL, &Blink_Indic_attributes);
   /* creation of Buzzer_ */
   Buzzer_Handle = osThreadNew(Buzzer_task, NULL, &Buzzer_attributes);
-  /* creation of Check_speed_ */
-  Check_speed_Handle = osThreadNew(Check_speed_task, NULL, &Check_speed_attributes);
 
-
+	//__enable_irq();
   /* Start scheduler */
   osKernelStart();
  
@@ -452,27 +476,27 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		{
 			// прерывание по первому каналу измерения частоты вращения
 			case Input_1_Pin:
-				calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_1);
+				calculate_speed(cnt_pulse, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_1);
 			break;
 			
 			// прерывание по второму каналу измерения частоты вращения
 			case Input_2_Pin:
-				calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_2);
+				calculate_speed(cnt_pulse, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_2);
 			break;
 			
 			// прерывание по третьему каналу измерения частоты вращения
 			case Input_3_Pin:
-				calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_3);
+				calculate_speed(cnt_pulse, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_3);
 			break;
 
 			// прерывание по четвертому каналу измерения частоты вращения
 			case Input_4_Pin:
-				calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_4);
+				calculate_speed(cnt_pulse, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_4);
 			break;
 
 			// прерывание по пятому каналу измерения частоты вращения
 			case Input_5_Pin:
-					calculate_speed(cnt_pulse, cnt_turn, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_5);
+				calculate_speed(cnt_pulse, &microsec, last_tim_turn, time_turn, turn_speed, speed_data, SPEED_CHANNEL_5);
 			break;
 			
 			// обработка нажатия кнопки уменьшения яркости дисплеев
@@ -493,33 +517,23 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 
 
-static inline void calculate_speed(uint8_t *cnt_pls, uint8_t *cnt_trn, int64_t *usec, int64_t *lst_tim_trn,
+static inline void calculate_speed(uint8_t *cnt_pls, int64_t *usec, int64_t *lst_tim_trn,
 																			int64_t *tim_trn, uint16_t *trn_spd, speed_data_t *speed, uint8_t spd_ch)
 {
 	if(cnt_pls[spd_ch]==4) // один оборот - 4 импульса датчика
 	{	
-		if(cnt_trn[spd_ch]<10)
-		{
 			*usec=micros();
 			tim_trn[spd_ch]=*usec-lst_tim_trn[spd_ch];
 			lst_tim_trn[spd_ch]=*usec;
 			trn_spd[spd_ch]=60000000/tim_trn[spd_ch];
-			speed[spd_ch].rotate[spd_ch]=trn_spd[spd_ch];
-			cnt_trn[spd_ch]++;
-		}
-		else
-		{
+			speed[spd_ch].rotate=trn_spd[spd_ch];
 			*usec=micros();
 			lst_tim_trn[spd_ch]=*usec;
-			cnt_trn[spd_ch]=0;
-			Speed_evt(&speed[spd_ch]);
-		}
+			speed[spd_ch].speed_ch = spd_ch;
+			if(Speed_evt(&speed[spd_ch]) != HAL_OK){
+				printf("Speed_evt %i ERROR!\n\r", spd_ch + 1);
+			}
 		cnt_pls[spd_ch]=0;
-//		flag_char[0]=false;
-//		count_reset_digit[0]=0;
-//		flag_stop_speed[0]=true;
-//		flag_stop_speed_once[0]=true;
-//		buzzer_on_stop_speed[0]=false;
 	}
 	cnt_pls[spd_ch]++;
 }

@@ -16,7 +16,7 @@ typedef enum{
 }num_channel_t;
 
 typedef struct{
-	uint16_t rotate[10];
+	uint16_t rotate;
 	uint8_t speed_ch;
 	bool buzzer_state;
 } speed_data_t;

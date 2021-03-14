@@ -30,11 +30,11 @@ hc595_err_t HC595_Set_Column_Symbols(SPI_HandleTypeDef *handle, char *str_clm, i
 		return HC595_CS_PORT_ERR;
 	}
 	
-	static uint8_t i;
+	static int8_t i;
 
 	CS_SET(cs_port, cs_pin);
 	
-	for(i = 0; i < n; i++){
+	for(i = n-1; i >= 0; i--){
 		if(HC595_Set_Symb(handle, str_clm[i]) != HAL_OK){
 			return HC595_TRANSMIT_ERR;
 		}

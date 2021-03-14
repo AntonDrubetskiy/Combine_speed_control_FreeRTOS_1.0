@@ -2,6 +2,7 @@
 #include "Buzzer.h"
 #include "cmsis_os.h"
 #include "main.h"
+#include <stdio.h>
 
 // включение/отключение звукового сигнала
 #define BUZZER_ON() 			HAL_GPIO_WritePin(Buzzer_GPIO_Port, Buzzer_Pin, GPIO_PIN_RESET) // включение
@@ -31,30 +32,46 @@ HAL_StatusTypeDef Buzzer_ev(buzzer_evnt_t* buzz_evnt)
 */
 void Buzzer_task(void *argument)
 {
+	BUZZER_OFF();
 	buzzer_evnt_t buzz_evnt;
-	
+	uint8_t i;
 	/* creation of Buzzer_queue */
-  Buzzer_queue_Handle = osMessageQueueNew (10, sizeof(buzzer_evnt_t), &Buzzer_queue_attributes);
+  Buzzer_queue_Handle = osMessageQueueNew (1, sizeof(buzzer_evnt_t), &Buzzer_queue_attributes);
+	
+	if(Buzzer_queue_Handle == NULL){
+		while(1){
+			printf("Buzzer_queue_Handle = NULL\n\r");
+			osDelay(1000);
+		}
+	}
 	
   for(;;)
-  {
+  {	
 		osMessageQueueGet(Buzzer_queue_Handle, &buzz_evnt, 0, osWaitForever);
 		
-		if((buzz_evnt.total_buzz_on_off & (1 << TOTAL_BZR_ON_OFF_BIT)) == 1){
-			if((buzz_evnt.ch_buzz_on_off & (1 << CH_BZR_ON_OFF_BIT)) == 1){
-				BUZZER_ON();
-			}else if((buzz_evnt.emerg_buzz_on_off & (1 << EMERG_BZR_ON_OFF_BIT)) == 1){
-				BUZZER_ON();
+		printf("buzz_evnt.total_buzz_on_off = %i\r", buzz_evnt.total_buzz_on_off);
+		printf("buzz_evnt.ch_buzz_on_off = %i\r", buzz_evnt.ch_buzz_on_off);
+		printf("buzz_evnt.emerg_buzz_on_off = %i\n\r", buzz_evnt.emerg_buzz_on_off);
+		
+		if(buzz_evnt.total_buzz_on_off == BIT_BZR_ON){
+			if(buzz_evnt.ch_buzz_on_off == BIT_BZR_ON){
+				//BUZZER_ON();
+				printf("BUZZER_ON\n\r");
+			}else if(buzz_evnt.emerg_buzz_on_off == BIT_BZR_ON){
+				//BUZZER_ON();
+				printf("BUZZER_ON\n\r");
 				osDelay(10000);
-				BUZZER_OFF();
-				buzz_evnt.emerg_buzz_on_off &= ~(1 << EMERG_BZR_ON_OFF_BIT);
+				//BUZZER_OFF();
+				printf("BUZZER_OFF\n\r");
+				buzz_evnt.emerg_buzz_on_off = BIT_BZR_OFF;
 			}else{
-				BUZZER_OFF();
+				//BUZZER_OFF();
+				printf("BUZZER_OFF\n\r");
 			}
 		}else{
-			BUZZER_OFF();
+			//BUZZER_OFF();
+			printf("BUZZER_OFF\n\r");
 		}
-	
     osDelay(1);
   }
 }

@@ -5,6 +5,7 @@
 #include "main.h"
 #include "Check_speed.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 #define NUM_COLUMN			(3)
 
@@ -78,10 +79,12 @@ void Normal_Indicate_task(void *argument)
 
   for(;;)
   {
-		if(osMessageQueueGet(Indic_queue_Handle, &indic_data, NULL, 0) == osOK){		
+		if( osMessageQueueGetCount(Indic_queue_Handle) != 0){		
+			osMessageQueueGet(Indic_queue_Handle, &indic_data, NULL, 0);
 			for(i = 0; i < NUM_COLUMN; i++){
 				str_indic_column[i][indic_data.speed_ch] = indic_data.speed[i];
 			}
+			//printf("Speed_indic %u = %s\n\r", indic_data.speed_ch + 1, indic_data.speed);
 		}
     
 		osMessageQueueGet(Brightness_queue_Handle, &brightness, NULL, 0);
