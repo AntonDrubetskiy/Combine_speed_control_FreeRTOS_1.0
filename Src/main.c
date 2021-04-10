@@ -53,21 +53,21 @@ osThreadId_t Blink_Indic_Handle;
 const osThreadAttr_t Blink_Indic_attributes = {
   .name = "Blink_Indic",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
+  .stack_size = 128 * 1
 };
 /* Definitions for Buzzer */
 osThreadId_t Buzzer_Handle;
 const osThreadAttr_t Buzzer_attributes = {
   .name = "Buzzer",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
+  .stack_size = 128 * 2
 };
 /* Definitions for Check_speed */
 osThreadId_t Check_speed_Handle;
 const osThreadAttr_t Check_speed_attributes = {
   .name = "Check_speed",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
+  .stack_size = 128 * 2
 };
 
 static uint16_t count = 0;
@@ -531,7 +531,7 @@ static inline void calculate_speed(uint8_t *cnt_pls, int64_t *usec, int64_t *lst
 			lst_tim_trn[spd_ch]=*usec;
 			speed[spd_ch].speed_ch = spd_ch;
 			if(Speed_evt(&speed[spd_ch]) != HAL_OK){
-				printf("Speed_evt %i ERROR!\n\r", spd_ch + 1);
+				//printf("Speed_evt %i ERROR!\n\r", spd_ch + 1);
 			}
 		cnt_pls[spd_ch]=0;
 	}

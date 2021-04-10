@@ -40,7 +40,7 @@ HAL_StatusTypeDef Speed_evt(speed_data_t *speed)
 void Check_speed_task(void *argument)
 {
 	/* creation of Speed_queue */
-  Speed_queue_Handle = osMessageQueueNew(10, sizeof(speed_data_t), &Speed_queue_attributes);
+  Speed_queue_Handle = osMessageQueueNew(100, sizeof(speed_data_t), &Speed_queue_attributes);
 	printf("sizeof(speed_data_t) =  %u\n\r", sizeof(speed_data_t));
 	speed_data_t check_speed_data;
 	
@@ -52,16 +52,21 @@ void Check_speed_task(void *argument)
 																								};
 
 	uint32_t speed[SPEED_CHANNEL_MAX] = {0};
-	
 	uint16_t control_speed[SPEED_CHANNEL_MAX] = {0};
+	bool rst_flag_check_spd = false;
+
 	
 	// обновление частот врашения при которых срабатывает тревога
 	Flash_Read(control_speed, SPEED_CHANNEL_MAX);
+	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_1, control_speed[SPEED_CHANNEL_1]);
+	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_2, control_speed[SPEED_CHANNEL_2]);
+	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_3, control_speed[SPEED_CHANNEL_3]);
+	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_4, control_speed[SPEED_CHANNEL_4]);
+	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_5, control_speed[SPEED_CHANNEL_5]);
 	
   for(;;)
   {
 		osMessageQueueGet(Speed_queue_Handle, &check_speed_data, 0, osWaitForever);
-
 		//printf("Speed_ch %u\n\r", check_speed_data.speed_ch);
 		switch(check_speed_data.speed_ch){
 			//------------------------------------
@@ -84,6 +89,7 @@ void Check_speed_task(void *argument)
 				}
 				indic_evnt.speed_ch = SPEED_CHANNEL_1;
 				latch[SPEED_CHANNEL_1] = true;
+				Indic_evt(&indic_evnt);
 				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
 				break;
 			
@@ -107,6 +113,7 @@ void Check_speed_task(void *argument)
 				}
 				indic_evnt.speed_ch = SPEED_CHANNEL_2;
 				latch[SPEED_CHANNEL_2] = true;
+				Indic_evt(&indic_evnt);
 				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
 				break;
 				
@@ -130,6 +137,7 @@ void Check_speed_task(void *argument)
 				}
 				indic_evnt.speed_ch = SPEED_CHANNEL_3;
 				latch[SPEED_CHANNEL_3] = true;
+				Indic_evt(&indic_evnt);
 				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
 				break;
 				
@@ -153,6 +161,7 @@ void Check_speed_task(void *argument)
 				}
 				indic_evnt.speed_ch = SPEED_CHANNEL_4;
 				latch[SPEED_CHANNEL_4] = true;
+				Indic_evt(&indic_evnt);
 				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
 				break;
 				
@@ -176,28 +185,30 @@ void Check_speed_task(void *argument)
 				}
 				indic_evnt.speed_ch = SPEED_CHANNEL_5;
 				latch[SPEED_CHANNEL_5] = true;
+				Indic_evt(&indic_evnt);
 				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
 				break;
 				
 			//------------------------------------
 			case SPEED_CHANNEL_MAX:
 				buzz_evnt.total_buzz_on_off = check_speed_data.buzzer_state;
+				Buzzer_ev(&buzz_evnt);
 				break;
 		}
 	
-		Indic_evt(&indic_evnt);
-		
 		if(buzz_check[SPEED_CHANNEL_1].ch_buzz_on_off == BIT_BZR_ON ||
 				buzz_check[SPEED_CHANNEL_2].ch_buzz_on_off == BIT_BZR_ON ||
 				buzz_check[SPEED_CHANNEL_3].ch_buzz_on_off == BIT_BZR_ON ||
 				buzz_check[SPEED_CHANNEL_4].ch_buzz_on_off == BIT_BZR_ON ||
 				buzz_check[SPEED_CHANNEL_5].ch_buzz_on_off == BIT_BZR_ON){
-				buzz_evnt.ch_buzz_on_off = BIT_BZR_ON;
-			}else{
+					buzz_evnt.ch_buzz_on_off = BIT_BZR_ON;
+					rst_flag_check_spd = true;
+					Buzzer_ev(&buzz_evnt);
+			}else if(rst_flag_check_spd == true){
 				buzz_evnt.ch_buzz_on_off = BIT_BZR_OFF;
+				Buzzer_ev(&buzz_evnt);
+				rst_flag_check_spd = false;
 			}
-		
-		Buzzer_ev(&buzz_evnt);
     osDelay(1);
   }
 }
@@ -206,6 +217,8 @@ void Check_speed_task(void *argument)
 
 void Increase_Check_Speed_TIM_counter(void)
 {
+	static bool reset_flag;
+	
 	TIM_cntr[SPEED_CHANNEL_1]++;
 	TIM_cntr[SPEED_CHANNEL_2]++;
 	TIM_cntr[SPEED_CHANNEL_3]++;
@@ -213,49 +226,51 @@ void Increase_Check_Speed_TIM_counter(void)
 	TIM_cntr[SPEED_CHANNEL_5]++;
 	
 	if(TIM_cntr[SPEED_CHANNEL_1] == ONE_SEC && latch[SPEED_CHANNEL_1]){
-		buzz_evnt.emerg_buzz_on_off = BIT_BZR_ON;
+		reset_flag = true;
 		indic_evnt.ch_1_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_1;
 		sprintf(indic_evnt.speed, "---");
 		printf("TIM_cntr[SPEED_CHANNEL_1] == ONE_SEC\n\r");
 		Indic_evt(&indic_evnt);
-		Buzzer_ev(&buzz_evnt);
 	}
 	if(TIM_cntr[SPEED_CHANNEL_2] == ONE_SEC && latch[SPEED_CHANNEL_2]){
-		buzz_evnt.emerg_buzz_on_off = BIT_BZR_ON;
+		reset_flag = true;
 		indic_evnt.ch_2_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_2;
 		sprintf(indic_evnt.speed, "---");
 		printf("TIM_cntr[SPEED_CHANNEL_2] == ONE_SEC\n\r");
 		Indic_evt(&indic_evnt);
-		Buzzer_ev(&buzz_evnt);
 	}
 	if(TIM_cntr[SPEED_CHANNEL_3] == ONE_SEC && latch[SPEED_CHANNEL_3]){
-		buzz_evnt.emerg_buzz_on_off = BIT_BZR_ON;
+		reset_flag = true;
 		indic_evnt.ch_3_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_3;
 		printf("TIM_cntr[SPEED_CHANNEL_3] == ONE_SEC\n\r");
 		sprintf(indic_evnt.speed, "---");
 		Indic_evt(&indic_evnt);
-		Buzzer_ev(&buzz_evnt);
 	}
 	if(TIM_cntr[SPEED_CHANNEL_4] == ONE_SEC && latch[SPEED_CHANNEL_4]){
-		buzz_evnt.emerg_buzz_on_off = BIT_BZR_ON;
+		reset_flag = true;
 		indic_evnt.ch_4_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_4;
 		printf("TIM_cntr[SPEED_CHANNEL_4] == ONE_SEC\n\r");
 		sprintf(indic_evnt.speed, "---");
 		Indic_evt(&indic_evnt);
-		Buzzer_ev(&buzz_evnt);
 	}
 	if(TIM_cntr[SPEED_CHANNEL_5] == ONE_SEC && latch[SPEED_CHANNEL_5]){
-		buzz_evnt.emerg_buzz_on_off = BIT_BZR_ON;
+		reset_flag = true;
 		indic_evnt.ch_5_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_5;
 		printf("TIM_cntr[SPEED_CHANNEL_5] == ONE_SEC\n\r");
 		sprintf(indic_evnt.speed, "---");
 		Indic_evt(&indic_evnt);
+	}
+	
+	if(reset_flag == true){
+		buzz_evnt.emerg_buzz_on_off = BIT_BZR_ON;
 		Buzzer_ev(&buzz_evnt);
+		buzz_evnt.emerg_buzz_on_off = BIT_BZR_OFF;
+		reset_flag = false;
 	}
 
 }
