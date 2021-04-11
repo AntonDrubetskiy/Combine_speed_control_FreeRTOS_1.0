@@ -47,29 +47,39 @@ void Buzzer_task(void *argument)
   for(;;)
   {	
 		osMessageQueueGet(Buzzer_queue_Handle, &buzz_evnt, 0, osWaitForever);
-		
+#ifdef DEBUG
 		printf("buzz_evnt.total_buzz_on_off = %i\r", buzz_evnt.total_buzz_on_off);
 		printf("buzz_evnt.ch_buzz_on_off = %i\r", buzz_evnt.ch_buzz_on_off);
 		printf("buzz_evnt.emerg_buzz_on_off = %i\n\r", buzz_evnt.emerg_buzz_on_off);
-		
+#endif
 		if(buzz_evnt.total_buzz_on_off == BIT_BZR_ON){
 			if(buzz_evnt.ch_buzz_on_off == BIT_BZR_ON){
 				BUZZER_ON();
+#ifdef DEBUG
 				printf("BUZZER_ON\n\r");
+#endif
 			}else if(buzz_evnt.emerg_buzz_on_off == BIT_BZR_ON){
 				BUZZER_ON();
+#ifdef DEBUG
 				printf("BUZZER_ON\n\r");
+#endif
 				osDelay(1000);
 				BUZZER_OFF();
+#ifdef DEBUG
 				printf("BUZZER_OFF\n\r");
+#endif
 				buzz_evnt.emerg_buzz_on_off = BIT_BZR_OFF;
 			}else{
 				BUZZER_OFF();
+#ifdef DEBUG
 				printf("BUZZER_OFF\n\r");
+#endif
 			}
 		}else{
 			BUZZER_OFF();
+#ifdef DEBUG
 			printf("BUZZER_OFF\n\r");
+#endif
 		}
     osDelay(1);
   }

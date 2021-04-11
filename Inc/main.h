@@ -13,6 +13,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* Private defines -----------------------------------------------------------*/
+#define DEBUG
 #define Input_1_Pin 						GPIO_PIN_0
 #define Input_1_GPIO_Port 			GPIOA
 #define Input_1_EXTI_IRQn 			EXTI0_IRQn

@@ -59,16 +59,19 @@ void Check_speed_task(void *argument)
 	
 	// обновление частот врашения при которых срабатывает тревога
 	Flash_Read(control_speed, SPEED_CHANNEL_MAX);
+#ifdef DEBUG
 	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_1, control_speed[SPEED_CHANNEL_1]);
 	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_2, control_speed[SPEED_CHANNEL_2]);
 	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_3, control_speed[SPEED_CHANNEL_3]);
 	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_4, control_speed[SPEED_CHANNEL_4]);
 	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_5, control_speed[SPEED_CHANNEL_5]);
-	
+#endif
   for(;;)
   {
 		osMessageQueueGet(Speed_queue_Handle, &check_speed_data, 0, osWaitForever);
+#ifdef DEBUG
 		//printf("Speed_ch %u\n\r", check_speed_data.speed_ch);
+#endif
 		switch(check_speed_data.speed_ch){
 			//------------------------------------
 			case SPEED_CHANNEL_1:
@@ -131,7 +134,9 @@ void Increase_Check_Speed_TIM_counter(void)
 		indic_evnt.ch_1_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_1;
 		sprintf(indic_evnt.speed, "---");
+#ifdef DEBUG
 		printf("TIM_cntr[SPEED_CHANNEL_1] == ONE_SEC\n\r");
+#endif
 		Indic_evt(&indic_evnt);
 	}
 	if(TIM_cntr[SPEED_CHANNEL_2] == ONE_SEC && latch[SPEED_CHANNEL_2]){
@@ -139,14 +144,18 @@ void Increase_Check_Speed_TIM_counter(void)
 		indic_evnt.ch_2_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_2;
 		sprintf(indic_evnt.speed, "---");
+#ifdef DEBUG
 		printf("TIM_cntr[SPEED_CHANNEL_2] == ONE_SEC\n\r");
+#endif
 		Indic_evt(&indic_evnt);
 	}
 	if(TIM_cntr[SPEED_CHANNEL_3] == ONE_SEC && latch[SPEED_CHANNEL_3]){
 		reset_flag = true;
 		indic_evnt.ch_3_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_3;
+#ifdef DEBUG
 		printf("TIM_cntr[SPEED_CHANNEL_3] == ONE_SEC\n\r");
+#endif
 		sprintf(indic_evnt.speed, "---");
 		Indic_evt(&indic_evnt);
 	}
@@ -154,7 +163,9 @@ void Increase_Check_Speed_TIM_counter(void)
 		reset_flag = true;
 		indic_evnt.ch_4_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_4;
+#ifdef DEBUG
 		printf("TIM_cntr[SPEED_CHANNEL_4] == ONE_SEC\n\r");
+#endif
 		sprintf(indic_evnt.speed, "---");
 		Indic_evt(&indic_evnt);
 	}
@@ -162,7 +173,9 @@ void Increase_Check_Speed_TIM_counter(void)
 		reset_flag = true;
 		indic_evnt.ch_5_on = 1;
 		indic_evnt.speed_ch = SPEED_CHANNEL_5;
+#ifdef DEBUG
 		printf("TIM_cntr[SPEED_CHANNEL_5] == ONE_SEC\n\r");
+#endif
 		sprintf(indic_evnt.speed, "---");
 		Indic_evt(&indic_evnt);
 	}
@@ -197,5 +210,7 @@ static inline void check_speed(uint32_t* spd, uint16_t* ctrl_speed, speed_data_t
 				indic_evnt.speed_ch = speed_data->speed_ch;
 				latch[speed_data->speed_ch] = true;
 				Indic_evt(&indic_evnt);
+#ifdef DEBUG
 				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
+#endif
 }

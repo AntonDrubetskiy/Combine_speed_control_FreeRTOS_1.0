@@ -84,7 +84,9 @@ void Normal_Indicate_task(void *argument)
 			for(i = 0; i < NUM_COLUMN; i++){
 				str_indic_column[i][indic_data.speed_ch] = indic_data.speed[i];
 			}
+#ifdef DEBUG
 			//printf("Speed_indic %u = %s\n\r", indic_data.speed_ch + 1, indic_data.speed);
+#endif
 		}
     
 		osMessageQueueGet(Brightness_queue_Handle, &brightness, NULL, 0);
