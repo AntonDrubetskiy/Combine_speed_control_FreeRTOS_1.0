@@ -42,6 +42,14 @@ void Check_speed_task(void *argument)
 {
 	/* creation of Speed_queue */
   Speed_queue_Handle = osMessageQueueNew(100, sizeof(speed_data_t), &Speed_queue_attributes);
+	
+	if(Speed_queue_Handle == NULL){
+		while(1){
+			printf("Speed_queue_Handle = NULL\n\r");
+			osDelay(1000);
+		}
+	}
+	
 	printf("sizeof(speed_data_t) =  %u\n\r", sizeof(speed_data_t));
 	speed_data_t check_speed_data;
 	

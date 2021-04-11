@@ -67,6 +67,24 @@ void Normal_Indicate_task(void *argument)
   Indic_queue_Handle = osMessageQueueNew(10, sizeof(indic_data_t), &Indic_queue_attributes);
 	/* creation of Brightness_queue */
   Brightness_queue_Handle = osMessageQueueNew(10, sizeof(uint16_t), &Brightness_queue_attributes);
+	if(Indic_queue_Handle == NULL){
+		if(Brightness_queue_Handle == NULL){
+		while(1){
+			printf("Speed_queue_Handle & Brightness_queue_Handle = NULL\n\r");
+			osDelay(1000);
+		}
+	}else{
+			while(1){
+				printf("Indic_queue_Handle = NULL\n\r");
+				osDelay(1000);
+			}
+		} 
+	}else if(Brightness_queue_Handle == NULL){
+		while(1){
+			printf("Brightness_queue_Handle = NULL\n\r");
+			osDelay(1000);
+		}
+	}
 	
 	uint8_t i;
 	uint16_t brightness = BRIGHTNESS_100;
