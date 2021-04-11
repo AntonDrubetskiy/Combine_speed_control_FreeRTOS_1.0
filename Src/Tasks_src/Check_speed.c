@@ -31,6 +31,7 @@ HAL_StatusTypeDef Speed_evt(speed_data_t *speed)
 	return HAL_OK;
 }
 
+static inline void check_speed(uint32_t* spd, uint16_t* ctrl_speed, speed_data_t* speed_data, buzzer_evnt_t* bzr_chck);
 
 /**
 * @brief Function implementing the Check_speed_ thread.
@@ -71,124 +72,24 @@ void Check_speed_task(void *argument)
 		switch(check_speed_data.speed_ch){
 			//------------------------------------
 			case SPEED_CHANNEL_1:
-				speed[SPEED_CHANNEL_1] = check_speed_data.rotate;
-	
-				if(speed[SPEED_CHANNEL_1] < MIN_SPEED){
-					indic_evnt.ch_1_on = 1;
-					sprintf(indic_evnt.speed, "---");
-				}else{
-					sprintf(indic_evnt.speed, "%u", speed[SPEED_CHANNEL_1]);
-					TIM_cntr[SPEED_CHANNEL_1] = 0;
-					if(speed[SPEED_CHANNEL_1] < control_speed[SPEED_CHANNEL_1]){
-						indic_evnt.ch_1_on = 0;
-						buzz_check[SPEED_CHANNEL_1].ch_buzz_on_off = BIT_BZR_ON;
-					}else{
-						indic_evnt.ch_1_on = 1;
-						buzz_check[SPEED_CHANNEL_1].ch_buzz_on_off = BIT_BZR_OFF;
-					}
-				}
-				indic_evnt.speed_ch = SPEED_CHANNEL_1;
-				latch[SPEED_CHANNEL_1] = true;
-				Indic_evt(&indic_evnt);
-				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
-				break;
-			
+					check_speed(speed, control_speed, &check_speed_data, buzz_check);
+				break;	
 			//------------------------------------
 			case SPEED_CHANNEL_2:
-				speed[SPEED_CHANNEL_2] = check_speed_data.rotate;
-	
-				if(speed[SPEED_CHANNEL_2] < MIN_SPEED){
-					indic_evnt.ch_1_on = 1;
-					sprintf(indic_evnt.speed, "---");
-				}else{
-					sprintf(indic_evnt.speed, "%u", speed[SPEED_CHANNEL_2]);
-					TIM_cntr[SPEED_CHANNEL_2] = 0;
-					if(speed[SPEED_CHANNEL_2] < control_speed[SPEED_CHANNEL_2]){
-						indic_evnt.ch_1_on = 0;
-						buzz_check[SPEED_CHANNEL_2].ch_buzz_on_off = BIT_BZR_ON;
-					}else{
-						indic_evnt.ch_1_on = 1;
-						buzz_check[SPEED_CHANNEL_2].ch_buzz_on_off = BIT_BZR_OFF;
-					}
-				}
-				indic_evnt.speed_ch = SPEED_CHANNEL_2;
-				latch[SPEED_CHANNEL_2] = true;
-				Indic_evt(&indic_evnt);
-				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
+					check_speed(speed, control_speed, &check_speed_data, buzz_check);
 				break;
-				
 			//------------------------------------
 			case SPEED_CHANNEL_3:
-				speed[SPEED_CHANNEL_3] = check_speed_data.rotate;
-	
-				if(speed[SPEED_CHANNEL_3] < MIN_SPEED){
-					indic_evnt.ch_1_on = 1;
-					sprintf(indic_evnt.speed, "---");
-				}else{
-					sprintf(indic_evnt.speed, "%u", speed[SPEED_CHANNEL_3]);
-					TIM_cntr[SPEED_CHANNEL_3] = 0;
-					if(speed[SPEED_CHANNEL_3] < control_speed[SPEED_CHANNEL_3]){
-						indic_evnt.ch_1_on = 0;
-						buzz_check[SPEED_CHANNEL_3].ch_buzz_on_off = BIT_BZR_ON;
-					}else{
-						indic_evnt.ch_1_on = 1;
-						buzz_check[SPEED_CHANNEL_3].ch_buzz_on_off = BIT_BZR_OFF;
-					}
-				}
-				indic_evnt.speed_ch = SPEED_CHANNEL_3;
-				latch[SPEED_CHANNEL_3] = true;
-				Indic_evt(&indic_evnt);
-				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
+					check_speed(speed, control_speed, &check_speed_data, buzz_check);
 				break;
-				
 			//------------------------------------
 			case SPEED_CHANNEL_4:
-				speed[SPEED_CHANNEL_4] = check_speed_data.rotate;
-	
-				if(speed[SPEED_CHANNEL_4] < MIN_SPEED){
-					indic_evnt.ch_1_on = 1;
-					sprintf(indic_evnt.speed, "---");
-				}else{
-					sprintf(indic_evnt.speed, "%u", speed[SPEED_CHANNEL_4]);
-					TIM_cntr[SPEED_CHANNEL_4] = 0;
-					if(speed[SPEED_CHANNEL_4] < control_speed[SPEED_CHANNEL_4]){
-						indic_evnt.ch_1_on = 0;
-						buzz_check[SPEED_CHANNEL_4].ch_buzz_on_off = BIT_BZR_ON;
-					}else{
-						indic_evnt.ch_1_on = 1;
-						buzz_check[SPEED_CHANNEL_4].ch_buzz_on_off = BIT_BZR_OFF;
-					}
-				}
-				indic_evnt.speed_ch = SPEED_CHANNEL_4;
-				latch[SPEED_CHANNEL_4] = true;
-				Indic_evt(&indic_evnt);
-				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
+					check_speed(speed, control_speed, &check_speed_data, buzz_check);
 				break;
-				
 			//------------------------------------
 			case SPEED_CHANNEL_5:
-				speed[SPEED_CHANNEL_5] = check_speed_data.rotate;
-	
-				if(speed[SPEED_CHANNEL_5] < MIN_SPEED){
-					indic_evnt.ch_1_on = 1;
-					sprintf(indic_evnt.speed, "---");
-				}else{
-					sprintf(indic_evnt.speed, "%u", speed[SPEED_CHANNEL_5]);
-					TIM_cntr[SPEED_CHANNEL_5] = 0;
-					if(speed[SPEED_CHANNEL_5] < control_speed[SPEED_CHANNEL_5]){
-						indic_evnt.ch_1_on = 0;
-						buzz_check[SPEED_CHANNEL_5].ch_buzz_on_off = BIT_BZR_ON;
-					}else{
-						indic_evnt.ch_1_on = 1;
-						buzz_check[SPEED_CHANNEL_5].ch_buzz_on_off = BIT_BZR_OFF;
-					}
-				}
-				indic_evnt.speed_ch = SPEED_CHANNEL_5;
-				latch[SPEED_CHANNEL_5] = true;
-				Indic_evt(&indic_evnt);
-				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
+					check_speed(speed, control_speed, &check_speed_data, buzz_check);
 				break;
-				
 			//------------------------------------
 			case SPEED_CHANNEL_MAX:
 				buzz_evnt.total_buzz_on_off = check_speed_data.buzzer_state;
@@ -273,4 +174,28 @@ void Increase_Check_Speed_TIM_counter(void)
 		reset_flag = false;
 	}
 
+}
+
+
+static inline void check_speed(uint32_t* spd, uint16_t* ctrl_speed, speed_data_t* speed_data, buzzer_evnt_t* bzr_chck)
+{
+				spd[speed_data->speed_ch] = speed_data->rotate;
+				if(spd[speed_data->speed_ch] < MIN_SPEED){
+					indic_evnt.ch_1_on = 1;
+					sprintf(indic_evnt.speed, "---");
+				}else{
+					sprintf(indic_evnt.speed, "%u", spd[speed_data->speed_ch]);
+					TIM_cntr[speed_data->speed_ch] = 0;
+					if(spd[speed_data->speed_ch] < ctrl_speed[speed_data->speed_ch]){
+						indic_evnt.ch_1_on = 0;
+						bzr_chck[speed_data->speed_ch].ch_buzz_on_off = BIT_BZR_ON;
+					}else{
+						indic_evnt.ch_1_on = 1;
+						bzr_chck[speed_data->speed_ch].ch_buzz_on_off = BIT_BZR_OFF;
+					}
+				}
+				indic_evnt.speed_ch = speed_data->speed_ch;
+				latch[speed_data->speed_ch] = true;
+				Indic_evt(&indic_evnt);
+				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
 }
