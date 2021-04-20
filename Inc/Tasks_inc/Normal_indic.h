@@ -27,5 +27,6 @@ void Normal_Indicate_task(void *argument);
 
 HAL_StatusTypeDef Indic_evt(indic_data_t *indic);
 HAL_StatusTypeDef Indic_brightness_evt(uint16_t *b);
+void check_blink_indic(void);
 
 #endif //__NORMAL_INDIC_H

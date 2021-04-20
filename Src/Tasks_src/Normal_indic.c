@@ -12,6 +12,9 @@
 SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_spi2_tx;
 
+__IO bool flag_blink = false;
+
+
 // подключение разрядов
 #define DIGIT_1_ON(b) 		TIM3->CCR3=b // 1-й
 #define DIGIT_2_ON(b)			TIM3->CCR2=b // 2-й
@@ -53,6 +56,8 @@ static void MX_DMA_Init(void);
 static void MX_SPI2_Init(void);
 
 static inline void create_indic_strings(char **str_speed, char **str_indic, char *str_off);
+static inline void set_blink_indic(char** clm_str, indic_data_t* i_dat);
+
 
 /**
   * @brief  Function implementing the Normal_Indic_ thread.
@@ -94,7 +99,7 @@ void Normal_Indicate_task(void *argument)
 	char *str_indic_column[NUM_COLUMN];
 	
 	create_indic_strings(str_speed, str_indic_column, str_off);
-
+	// main loop
   for(;;)
   {
 		if( osMessageQueueGetCount(Indic_queue_Handle) != 0){		
@@ -108,6 +113,8 @@ void Normal_Indicate_task(void *argument)
 		}
     
 		osMessageQueueGet(Brightness_queue_Handle, &brightness, NULL, 0);
+		
+		set_blink_indic(str_indic_column, &indic_data);
 		
 		for(i = 0; i < NUM_COLUMN; i++){
 			
@@ -153,6 +160,101 @@ static inline void create_indic_strings(char **str_speed, char **str_indic, char
 		for(j = 0; j < SPEED_CHANNEL_MAX; j++){
 			str_indic[i][j] = str_speed[j][i];
 		}
+	}
+}
+
+
+void check_blink_indic()
+{
+	flag_blink = !flag_blink;
+}
+
+static inline void set_blink_indic(char** clm_str, indic_data_t* i_dat)
+{
+	static int8_t i;
+	static bool set_blink_latch[SPEED_CHANNEL_MAX] = {true};
+	
+	switch(i_dat->speed_ch){
+		
+		case SPEED_CHANNEL_1:
+			if(i_dat->ch_1_on == 0){
+				if(flag_blink == true && set_blink_latch[SPEED_CHANNEL_1] == true){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = ' ';
+					}
+					set_blink_latch[SPEED_CHANNEL_1] = false;
+				}else if(flag_blink == false && set_blink_latch[SPEED_CHANNEL_1] == false){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = i_dat->speed[i];
+					}
+					set_blink_latch[SPEED_CHANNEL_1] = true;
+				}
+			}			
+			break;
+		
+		case SPEED_CHANNEL_2:
+			if(i_dat->ch_2_on == 0){
+				if(flag_blink == true && set_blink_latch[SPEED_CHANNEL_2] == true){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = ' ';
+					}
+					set_blink_latch[SPEED_CHANNEL_2] = false;
+				}else if(flag_blink == false && set_blink_latch[SPEED_CHANNEL_2] == false){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = i_dat->speed[i];
+					}
+					set_blink_latch[SPEED_CHANNEL_2] = true;
+				}
+			}	
+			break;
+		
+		case SPEED_CHANNEL_3:
+			if(i_dat->ch_3_on == 0){
+				if(flag_blink == true && set_blink_latch[SPEED_CHANNEL_3] == true){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = ' ';
+					}
+					set_blink_latch[SPEED_CHANNEL_3] = false;
+				}else if(flag_blink == false && set_blink_latch[SPEED_CHANNEL_3] == false){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = i_dat->speed[i];
+					}
+					set_blink_latch[SPEED_CHANNEL_3] = true;
+				}
+			}	
+			break;
+		
+		case SPEED_CHANNEL_4:
+			if(i_dat->ch_1_on == 0){
+				if(flag_blink == true && set_blink_latch[SPEED_CHANNEL_4] == true){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = ' ';
+					}
+					set_blink_latch[SPEED_CHANNEL_4] = false;
+				}else if(flag_blink == false && set_blink_latch[SPEED_CHANNEL_4] == false){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = i_dat->speed[i];
+					}
+					set_blink_latch[SPEED_CHANNEL_4] = true;
+				}
+			}	
+			break;
+		
+		case SPEED_CHANNEL_5:
+			if(i_dat->ch_1_on == 0){
+				if(flag_blink == true && set_blink_latch[SPEED_CHANNEL_5] == true){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = ' ';
+					}
+					set_blink_latch[SPEED_CHANNEL_5] = false;
+				}else if(flag_blink == false && set_blink_latch[SPEED_CHANNEL_5] == false){
+					for(i = 0; i < NUM_COLUMN; i++){
+						clm_str[i][i_dat->speed_ch] = i_dat->speed[i];
+					}
+					set_blink_latch[SPEED_CHANNEL_5] = true;
+				}
+			}	
+			break;
 	}
 }
 

@@ -440,6 +440,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	
 	if(htim->Instance == TIM2){
 		Increase_Check_Speed_TIM_counter();
+		check_blink_indic();
 	}
 }
 

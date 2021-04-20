@@ -74,6 +74,7 @@ void Check_speed_task(void *argument)
 	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_4, control_speed[SPEED_CHANNEL_4]);
 	printf("control_speed[%u] = %u\n\r", SPEED_CHANNEL_5, control_speed[SPEED_CHANNEL_5]);
 #endif
+	// main loop
   for(;;)
   {
 		osMessageQueueGet(Speed_queue_Handle, &check_speed_data, 0, osWaitForever);
