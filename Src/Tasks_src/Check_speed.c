@@ -11,28 +11,27 @@
 #define ONE_SEC						4
 #define MIN_SPEED					60
 
+//===================Global variable definitions========================== 
 volatile uint32_t TIM_cntr[SPEED_CHANNEL_MAX];
 volatile bool latch[SPEED_CHANNEL_MAX] = {false};
 static buzzer_evnt_t buzz_evnt = {.total_buzz_on_off = BIT_BZR_ON};
 static indic_data_t indic_evnt;
+static uint16_t control_speed[SPEED_CHANNEL_MAX] = {0};
 
 /* Definitions for Speed_queue */
 osMessageQueueId_t Speed_queue_Handle;
 const osMessageQueueAttr_t Speed_queue_attributes = {
   .name = "Speed_queue"
 };
+//===================END Global variable definitions========================== 
 
 
-HAL_StatusTypeDef Speed_evt(speed_data_t *speed)
-{
-	if(osMessageQueuePut(Speed_queue_Handle, speed, 0, 0) != osOK){
-		return HAL_ERROR;
-	}
-	return HAL_OK;
-}
-
+//========================Static Function declaration==========================
 static inline void check_speed(uint32_t* spd, uint16_t* ctrl_speed, speed_data_t* speed_data, buzzer_evnt_t* bzr_chck);
+//========================END Static Function declaration========================= 
 
+
+//=========================Check_speed_task================================
 /**
 * @brief Function implementing the Check_speed_ thread.
 * @param argument: Not used
@@ -61,7 +60,6 @@ void Check_speed_task(void *argument)
 																								};
 
 	uint32_t speed[SPEED_CHANNEL_MAX] = {0};
-	uint16_t control_speed[SPEED_CHANNEL_MAX] = {0};
 	bool rst_flag_check_spd = false;
 
 	
@@ -125,9 +123,25 @@ void Check_speed_task(void *argument)
     osDelay(1);
   }
 }
+//=========================END Check_speed_task================================
 
 
+//================Function definition===================
 
+HAL_StatusTypeDef Speed_evt(speed_data_t *speed)
+{
+	if(osMessageQueuePut(Speed_queue_Handle, speed, 0, 0) != osOK){
+		return HAL_ERROR;
+	}
+	return HAL_OK;
+}
+
+HAL_StatusTypeDef set_control_speed(void)
+{
+	return Flash_Write(control_speed, SPEED_CHANNEL_MAX);
+}
+
+//
 void Increase_Check_Speed_TIM_counter(void)
 {
 	static bool reset_flag;
@@ -223,3 +237,5 @@ static inline void check_speed(uint32_t* spd, uint16_t* ctrl_speed, speed_data_t
 				//printf("Speed_check %u = %s\n\r", indic_evnt.speed_ch + 1, indic_evnt.speed);
 #endif
 }
+//================END Function definition===================
+

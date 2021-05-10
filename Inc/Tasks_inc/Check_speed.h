@@ -27,4 +27,6 @@ void Increase_Check_Speed_TIM_counter(void);
 
 HAL_StatusTypeDef Speed_evt(speed_data_t *speed);
 
+HAL_StatusTypeDef set_control_speed(void);
+
 #endif //__CHECK_SPEED_H
