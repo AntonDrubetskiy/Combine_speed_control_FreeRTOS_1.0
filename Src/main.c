@@ -6,7 +6,7 @@
 #include "Normal_indic.h"
 #include "Check_speed.h"
 #include "Buzzer.h"
-#include "Blink_indic.h"
+#include "Set_Ctrl_Speed.h"
 #include <stdio.h>
 
 
@@ -48,10 +48,10 @@ const osThreadAttr_t Normal_Indic_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
-/* Definitions for Blink_Indic */
-osThreadId_t Blink_Indic_Handle;
-const osThreadAttr_t Blink_Indic_attributes = {
-  .name = "Blink_Indic",
+/* Definitions for Set_Ctrl_Speed */
+osThreadId_t Set_Ctrl_Speed_Handle;
+const osThreadAttr_t Set_Ctrl_Speed_attributes = {
+  .name = "Set_Ctrl_Speed",
   .priority = (osPriority_t) osPriorityLow,
   .stack_size = 128 * 1
 };
@@ -136,7 +136,7 @@ int main(void)
   /* creation of Normal_Indic_ */
   Normal_Indic_Handle = osThreadNew(Normal_Indicate_task, NULL, &Normal_Indic_attributes);
   /* creation of Blink_Indic_ */
-  Blink_Indic_Handle = osThreadNew(Blink_Indicate_task, NULL, &Blink_Indic_attributes);
+  Set_Ctrl_Speed_Handle = osThreadNew(Set_Ctrl_Speed_task, NULL, &Set_Ctrl_Speed_attributes);
   /* creation of Buzzer_ */
   Buzzer_Handle = osThreadNew(Buzzer_task, NULL, &Buzzer_attributes);
 
